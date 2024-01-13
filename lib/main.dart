@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:zen_timer/zen.dart';
+import 'package:intl/intl.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const ZenApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class ZenApp extends StatelessWidget {
+  const ZenApp({super.key});
 
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    WidgetsFlutterBinding.ensureInitialized();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values);
     return MaterialApp(
-      title: 'Flutter Demo',
       theme: ThemeData(
         // This is the theme of your application.
         //
@@ -31,13 +36,13 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      title: 'ZEN Timer',
+      home: const ZenHomePage(title: 'ZEN Timer Home'),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+class ZenHomePage extends StatefulWidget {
 
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -49,25 +54,34 @@ class MyHomePage extends StatefulWidget {
   // always marked "final".
 
   final String title;
+  final String? startDateTime;
+  const ZenHomePage({super.key, required this.title, this.startDateTime});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<ZenHomePage> createState() => _ZenHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _ZenHomePageState extends State<ZenHomePage> {
 
-  void _incrementCounter() {
+  String _startDateTime = '';
+  void _onStartDateTimeUpdate() {
     setState(() {
       // This call to setState tells the Flutter framework that something has
       // changed in this State, which causes it to rerun the build method below
       // so that the display can reflect the updated values. If we changed
       // _counter without calling setState(), then the build method would not be
       // called again, and so nothing would appear to happen.
-      _counter++;
+      _startDateTime =
+          DateFormat('yyyy-MM-dd – kk:mm:ss').format(DateTime.now());
     });
   }
 
+  String _endDateTime = '';
+  void _onEndDateTimeReceived(String endDateTime) {
+    setState(() {
+      _endDateTime = endDateTime;
+    });
+  }
   @override
   Widget build(BuildContext context) {
     // This method is rerun every time setState is called, for instance as done
@@ -81,10 +95,10 @@ class _MyHomePageState extends State<MyHomePage> {
         // TRY THIS: Try changing the color here to a specific color (to
         // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
         // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        backgroundColor: Colors.white70,
+        title: Text(widget.title, selectionColor: Colors.black),
       ),
       body: Center(
         // Center is a layout widget. It takes a single child and positions it
@@ -105,21 +119,40 @@ class _MyHomePageState extends State<MyHomePage> {
           // wireframe for each widget.
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                shape: const CircleBorder(),
+              ),
+              onPressed: () {
+                _onStartDateTimeUpdate();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ZenPage(onDateTimeReceived: _onEndDateTimeReceived,)),
+                );
+              },
+              child: SvgPicture.asset('assets/Enso.svg', // Replace with your asset path
+                width: 150.0, // Optional, to set the width
+                height: 150.0, // Optional, to set the height
+              ),
+            ),
+            const SizedBox(
+                height: 30
+            ),
             const Text(
-              'You have pushed the button this many times:',
+              'Start Datetime:',
             ),
             Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+              '$_startDateTime',
+            ),
+            const Text(
+              'End Datetime:',
+            ),
+            Text(
+              '$_endDateTime',
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
